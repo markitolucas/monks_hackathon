@@ -4,17 +4,19 @@ from typing import List, Optional, Dict
 import time
 import uuid
 from db import models
+from kafka_publisher import PostPublisher
 import schemas
 
 class PostService:
     @staticmethod
-    def create_post(db: Session, post: schemas.PostCreate) -> models.PostDB:
+    def create_post(db: Session, post: schemas.PostBase) -> models.PostDB:
         db_post = models.PostDB(
             text=post.text
         )
         db.add(db_post)
         db.commit()
         db.refresh(db_post)
+        PostPublisher.publish_post_created(db_post)
         return db_post
 
     @staticmethod

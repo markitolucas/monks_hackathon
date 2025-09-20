@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@127.0.0.1:5432/vectordb")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@andromeda.lasdpc.icmc.usp.br:60104/vectordb")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

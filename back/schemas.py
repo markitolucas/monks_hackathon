@@ -5,15 +5,26 @@ import uuid
 
 class PostBase(BaseModel):
     text: str = Field(..., min_length=1, max_length=10000, description="Texto do post para análise")
-
+    # Configuração para manter camelCase no JSON
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_encoders={
+            datetime: lambda v: v.isoformat()
+        }
+    )
 class PostCreate(PostBase):
-    pass
+    text: str = Field(..., min_length=1, max_length=10000, description="Texto do post para análise")
 
 class PostResponse(PostBase):
     id: str
+    text: str
     created_at: datetime
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True  # Permite usar alias e nome original
+    )
+
 
 from pydantic import BaseModel, Field, ConfigDict, validator
 from datetime import datetime
