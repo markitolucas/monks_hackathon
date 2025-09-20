@@ -10,6 +10,7 @@ import threading
 import logging
 
 from kafka_subscriber import RAGResultSubscriber
+from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,14 @@ app = FastAPI(
     title="RAG Analysis API",
     description="API para análise de textos usando RAG",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # URL do seu frontend React
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permite todos os cabeçalhos
 )
 
 rag_subscriber = RAGResultSubscriber()
