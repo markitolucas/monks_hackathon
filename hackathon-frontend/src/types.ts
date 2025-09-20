@@ -2,11 +2,12 @@
 
 // Mantenha seu PostType original
 export type PostType = {
-  id: number;
-  author: string;
-  content: string;
-  timestamp: number;
+  postId: number;
+  text: string;
+  createdAt: string; // O backend envia uma string no formato ISO
+  authorId: number;
 };
+
 
 
 // Tipo para as citações (suposição da estrutura)
@@ -16,11 +17,11 @@ export type CitationType = {
   source: string;
 };
 
-// Tipo para a resposta completa do backend
 export type PostDetailsType = {
   version: string;
+  jobId: string; // NOVO CAMPO
   postId: number;
-  stance: "SUPPORT" | "REFUTE" | "UNCLEAR" | string; // Usamos união de strings para autocompletar
+  stance: "SUPPORT" | "REFUTE" | "UNCLEAR" | string;
   decision: string;
   confidence: number;
   scores: {
@@ -29,6 +30,7 @@ export type PostDetailsType = {
     freshness_avg: number;
   };
   explanation: string;
+  education: string; // NOVO CAMPO
   citations: CitationType[];
   latency_ms: number;
   model_used: string;

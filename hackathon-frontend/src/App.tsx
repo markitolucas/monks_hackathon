@@ -2,28 +2,33 @@ import { useState, useEffect } from "react";
 import { CreatePost } from "./components/CreatePost";
 import { PostList } from "./components/PostList";
 import type { PostType, PostDetailsType } from "./types";
-import { fetchPostDetails } from "./api";
+import { fetchPostDetails2 } from "./api2";
+import { fetchAllPosts, createPost, fetchPostDetails } from "./api";
 
 // O array de posts iniciais continua o mesmo...
-const initialPosts: PostType[] = [
-  {
-    id: 1,
-    author: "Usuário 1",
-    content:
-      "Estou pensando em como essa Máquina Analítica poderia ser usada para compor músicas! 🎵",
-    timestamp: Date.now() - 1000 * 60 * 30, // 30 minutos atrás
-  },
-  {
-    id: 2,
-    author: "Usuário 2",
-    content:
-      "Acredito que em cerca de 50 anos, será possível programar computadores para que eles possam jogar xadrez muito bem.",
-    timestamp: Date.now() - 1000 * 60 * 120, // 2 horas atrás
-  },
-];
+// const initialPosts: PostType[] = [
+//   {
+//     id: 1,
+//     author: "Usuário 1",
+//     content:
+//       "Estou pensando em como essa Máquina Analítica poderia ser usada para compor músicas! 🎵",
+//     timestamp: Date.now() - 1000 * 60 * 30, // 30 minutos atrás
+//   },
+//   {
+//     id: 2,
+//     author: "Usuário 2",
+//     content:
+//       "Acredito que em cerca de 50 anos, será possível programar computadores para que eles possam jogar xadrez muito bem.",
+//     timestamp: Date.now() - 1000 * 60 * 120, // 2 horas atrás
+//   },
+// ];
 
 function App() {
-  const [posts, setPosts] = useState<PostType[]>(initialPosts);
+  // const [posts, setPosts] = useState<PostType[]>(initialPosts);
+  // MUDANÇA: O estado inicial de posts é um array vazio
+  const [posts, setPosts] = useState<PostType[]>([]);
+  // MUDANÇA: Adicionamos um estado de loading para a busca inicial
+  const [isListLoading, setIsListLoading] = useState<boolean>(true);
 
   // --- NOVOS ESTADOS ---
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
@@ -32,24 +37,41 @@ function App() {
 
   // Efeito que busca os dados quando um post é selecionado
   useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        const initialPosts = await fetchAllPosts();
+        setPosts(initialPosts);
+      } catch (error) {
+        console.error(error);
+        // Aqui você poderia mostrar uma mensagem de erro na tela
+      } finally {
+        setIsListLoading(false);
+      }
+    };
+    loadPosts();
+  }, []); // O array vazio [] garante que isso rode apenas uma vez
+
+  useEffect(() => {
     if (selectedPostId === null) {
       setPostDetails(null);
       return;
     }
-
     const getDetails = async () => {
       setIsLoadingDetails(true);
-      const details = await fetchPostDetails(selectedPostId);
-      setPostDetails(details);
-      setIsLoadingDetails(false);
+      try {
+        const details = await fetchPostDetails(selectedPostId);
+        setPostDetails(details);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoadingDetails(false);
+      }
     };
-
     getDetails();
-  }, [selectedPostId]); // Roda sempre que `selectedPostId` mudar
+  }, [selectedPostId]);
 
   // Função para lidar com o clique em um post
   const handlePostSelect = (id: number) => {
-    // Se o post clicado já está selecionado, deselecione-o. Senão, selecione-o.
     if (id === selectedPostId) {
       setSelectedPostId(null);
     } else {
@@ -58,28 +80,16 @@ function App() {
   };
 
   // 👇 SUBSTITUA SUA FUNÇÃO POR ESTA VERSÃO ATUALIZADA
-  const handleAddPost = (content: string) => {
-    // --- 1. Montar o objeto para o "backend" ---
-    const postParaBackend = {
-      postId: Date.now(), // Usando timestamp como ID único para o protótipo
-      text: content,
-      createdAt: new Date().toISOString(), // Formato de data padrão ISO 8601
-      authorId: 1, // Simulando um usuário logado com ID 1
-    };
+  const handleAddPost = async (content: string) => {
+    try {
+      // Chamamos a nova versão da função createPost
+      const newPostFromApi = await createPost(content);
 
-    // --- 2. Printar o objeto no terminal do navegador ---
-    console.log("Enviando para o backend (simulação):", postParaBackend);
-
-    // --- 3. Continuar atualizando a interface ---
-    // Para não quebrar a UI, criamos um objeto no formato que os componentes esperam
-    const novoPostParaUI: PostType = {
-      id: postParaBackend.postId,
-      author: `Usuário (ID: ${postParaBackend.authorId})`,
-      content: postParaBackend.text,
-      timestamp: Date.now(),
-    };
-
-    setPosts([novoPostParaUI, ...posts]);
+      setPosts([newPostFromApi, ...posts]);
+    } catch (error) {
+      console.error(error);
+      alert("Não foi possível criar o post. Tente novamente.");
+    }
   };
 
   return (
@@ -100,13 +110,17 @@ function App() {
         <h2 className="text-xl font-bold text-slate-700 mt-8 mb-2">
           Mural de Posts
         </h2>
-        <PostList
-          posts={posts}
-          selectedPostId={selectedPostId}
-          postDetails={postDetails}
-          isLoading={isLoadingDetails}
-          onPostSelect={handlePostSelect}
-        />{" "}
+        {isListLoading ? (
+          <p>Carregando mural de posts...</p>
+        ) : (
+          <PostList
+            posts={posts}
+            selectedPostId={selectedPostId}
+            postDetails={postDetails}
+            isLoading={isLoadingDetails}
+            onPostSelect={handlePostSelect}
+          />
+        )}{" "}
       </main>
     </div>
   );

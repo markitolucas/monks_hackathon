@@ -1,35 +1,52 @@
 // src/api.ts
-import type { PostDetailsType } from './types';
+import type { PostType, PostDetailsType } from './types';
 
-// Esta função simula uma chamada de rede para buscar detalhes de um post.
-export const fetchPostDetails = (postId: number): Promise<PostDetailsType> => {
-  console.log(`Buscando detalhes para o post ID: ${postId}...`);
+// Definimos a URL base da nossa API em um só lugar
+const API_BASE_URL = 'http://andromeda.lasdpc.icmc.usp.br:60105';
 
-  // Usamos uma Promise com setTimeout para simular a latência da rede (1 segundo)
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Criamos dados falsos que correspondem ao schema do backend
-      const mockDetails: PostDetailsType = {
-        version: "rag.results.v1",
-        postId: postId,
-        stance: ["SUPPORT", "REFUTE", "UNCLEAR"][Math.floor(Math.random() * 3)],
-        decision: "Factually Correct (with context)",
-        confidence: Math.random() * (0.98 - 0.75) + 0.75, // Confiança entre 75% e 98%
-        scores: {
-          relevance_llm: Math.random(),
-          evidence_score: Math.random(),
-          freshness_avg: Math.random(),
-        },
-        explanation: "The claim is generally supported by evidence, but lacks some critical context regarding the timeline of events. Multiple sources confirm the main assertion.",
-        citations: [
-          { title: "Primary Source Report on Event X", url: "#", source: "news-source.com" },
-          { title: "Analysis of Timeline", url: "#", source: "analysis-journal.org" },
-        ],
-        latency_ms: Math.floor(Math.random() * (1200 - 800) + 800), // Latência entre 800ms e 1200ms
-        model_used: Math.random() > 0.5 ? "gpt-4o-mini" : "llama3.1:8b-instruct",
-      };
-      console.log("Detalhes recebidos:", mockDetails);
-      resolve(mockDetails);
-    }, 1000); // Atraso de 1000ms (1 segundo)
+// --- FUNÇÃO PARA BUSCAR A LISTA INICIAL DE POSTS ---
+// (Substitua '/posts' pelo seu endpoint real para buscar a lista)
+export const fetchAllPosts = async (): Promise<PostType[]> => {
+  const response = await fetch(`${API_BASE_URL}/posts`);
+  if (!response.ok) {
+    throw new Error('Falha ao buscar os posts do servidor.');
+  }
+  return response.json();
+};
+
+// --- FUNÇÃO PARA CRIAR UM NOVO POST (POST) ---
+// (Substitua '/posts' pelo seu endpoint real de criação)
+// A função createPost agora envia SOMENTE o texto, como na imagem.
+export const createPost = async (text: string): Promise<PostType> => {
+  const response = await fetch(`http://andromeda.lasdpc.icmc.usp.br:60105/posts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    // O corpo da requisição agora envia apenas o campo "text"
+    body: JSON.stringify({
+      text: text,
+    }),
   });
+
+  if (!response.ok) {
+    throw new Error('Falha ao criar o post.');
+  }
+  
+  // A API deve responder com o post completo recém-criado
+  return response.json();
+};
+
+
+
+// --- FUNÇÃO PARA BUSCAR DETALHES DE UM POST (GET) ---
+// (Substitua '/posts/${postId}/details' pelo seu endpoint real de detalhes)
+export const fetchPostDetails = async (postId: number): Promise<PostDetailsType> => {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}/details`);
+
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar detalhes para o post ${postId}.`);
+  }
+  
+  return response.json();
 };
